@@ -1,0 +1,4 @@
+id	name	category	price_fen	stock	warning_stock
+1001	可乐	饮料	300	50	10
+1002	面包	食品	500	20	5
+1003	洗衣液	日用品	2500	8	10
