@@ -1,0 +1,11 @@
+/build/
+/out/
+/supermarket
+*.exe
+*.o
+*.obj
+*.pdb
+*.ilk
+/.vs/
+/.vscode/
+/.idea/
