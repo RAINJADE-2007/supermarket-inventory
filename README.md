@@ -4,6 +4,37 @@
 
 **当前可编译、可打开菜单，但业务逻辑尚未实现。** 未填写的函数返回 `Status::NotImplemented`，界面显示“尚未实现”，不会把空结果当作查询结果，也不会假装保存成功。
 
+## 0. 浏览器工作台
+
+直接用浏览器打开 [web/public/index.html](web/public/index.html)，可浏览随项目提供的三条商品、按编号／名称／类别筛选、按单价或库存排序，以及查看低库存预警和分类统计。示例中的洗衣液库存为 8，低于预警值 10。
+
+联调 C++ 工作区时，在仓库根目录运行下列命令。需要 Node.js 18 或更新版本和支持 C++11 的 `g++`，无须安装 npm 依赖。
+
+```sh
+npm run build
+npm start
+```
+
+浏览器打开 [本地库存工作台](http://127.0.0.1:4174)，切换到 **C++ 工作区**。新增、编辑、出入库、查询、排序和文件操作都调用同一套 C++ 接口。业务模块仍由小组填写。接口返回 `NotImplemented` 时，前端会显示对应的任务编号。示例数据可通过 **数据文件 → 导入示例** 调用 D1 导入。C++ 工作区的数据随本地进程结束而清空，实现 D2 后可先导出留存。
+
+`npm run build` 在 `build/bin/` 中生成命令行程序 `supermarket` 及浏览器适配器 `inventory_web`，Windows 上两者文件名均带 `.exe`。PowerShell 中也可用 `npm.cmd run build` 和 `npm.cmd start`。若使用 CMake，可执行 `cmake -S . -B build` 和 `cmake --build build`，再执行 `npm start`。端口和适配器路径可分别通过 `INVENTORY_PORT` 与 `INVENTORY_WEB_BIN` 设置。
+
+若 Windows 下的 MinGW 因含中文用户名的临时路径而报错，可把 `INVENTORY_BUILD_TEMP` 指向有写入权限、仅含英文字母和数字的路径，例如在 PowerShell 中执行 `$env:INVENTORY_BUILD_TEMP = 'D:\msys64\tmp'`，再运行编译命令。
+
+### 扩展位置
+
+| 层次 | 位置 | 职责 |
+| --- | --- | --- |
+| C++ 业务 | `include/inventory.h`、`src/product.cpp`、`src/stock.cpp`、`src/query.cpp`、`src/data_io.cpp` | 保留顺序表和金额整数分表示，由四位成员按 A–D 分工完善 |
+| 命令行入口 | `src/main.cpp` | 菜单、录入和输出，复用 C++ 业务接口 |
+| 浏览器适配 | `web/native/inventory_web.cpp` | 管理一个 C++ 商品表，按业务状态返回结构化结果 |
+| 本地服务 | `web/server.mjs` | 提供页面与 `POST /api/action`，串行调度 C++ 并处理中转文件 |
+| 浏览器界面 | `web/public/` | `api.js` 管理调用和示例预览，`app.js` 管理交互和数据显示 |
+
+完成业务模块后可独立扩展界面。例如添加库存流水时，先确定记录的数据结构和出入库成功后的写入规则，再增加适配器查询、API 操作与浏览器视图。扩展筛选、视图或导出时，沿用现有 `Status` 和 `ProductList` 契约。`npm run check` 可检查前端和本地服务的 JavaScript 语法。
+
+扩展 API 时，在 `web/server.mjs` 的 `actionFields` 中声明操作及字段顺序，在 `web/native/inventory_web.cpp` 接入该操作对应的 C++ 函数，并让前端通过 `inventoryApi.request` 调用。响应统一包含 `status`，仅在成功时读取 `data`。统计响应将 `totalValueFen` 写成十进制字符串，以保留超出 JavaScript 安全整数范围的分值。
+
 ## 1. 文件与四人分工
 
 | 成员 | 主要填写文件 | TODO | 工作内容 |
