@@ -5,13 +5,84 @@
 #include <sstream>
 #include <string>
 
-// 主菜单、基础输入和结果显示已接好。
-// 你们主要填写四个业务 .cpp 内的 TODO，函数签名保持与头文件一致。
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 namespace {
+
+#ifdef _WIN32
+class ConsoleOutputUtf8 {
+public:
+    ConsoleOutputUtf8() {
+        DWORD mode;
+        if (GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &mode)) {
+            const UINT codePage = GetConsoleOutputCP();
+            if (codePage != CP_UTF8 && SetConsoleOutputCP(CP_UTF8)) {
+                originalCodePage = codePage;
+            }
+        }
+    }
+
+    ~ConsoleOutputUtf8() {
+        if (originalCodePage != 0) {
+            std::cout.flush();
+            SetConsoleOutputCP(originalCodePage);
+        }
+    }
+
+private:
+    UINT originalCodePage = 0;
+};
+
+bool readConsoleLine(HANDLE console, std::string& value) {
+    std::wstring line;
+    wchar_t buffer[256];
+    DWORD count;
+    do {
+        if (!ReadConsoleW(console, buffer, 256, &count, nullptr) || count == 0) {
+            return false;
+        }
+        line.append(buffer, count);
+    } while (line.back() != L'\n');
+
+    if (line.front() == L'\x1a') {
+        return false;
+    }
+    line.pop_back();
+    if (!line.empty() && line.back() == L'\r') {
+        line.pop_back();
+    }
+    value.clear();
+    if (line.empty()) {
+        return true;
+    }
+    const int size = WideCharToMultiByte(CP_UTF8, 0, line.data(),
+                                         static_cast<int>(line.size()), nullptr, 0, nullptr, nullptr);
+    if (size == 0) {
+        return false;
+    }
+    value.resize(size);
+    return WideCharToMultiByte(CP_UTF8, 0, line.data(), static_cast<int>(line.size()),
+                               &value[0], size, nullptr, nullptr) == size;
+}
+#endif
 
 bool readText(const std::string& prompt, std::string& value) {
     std::cout << prompt;
-    if (std::getline(std::cin, value)) {
+    bool read = false;
+#ifdef _WIN32
+    DWORD mode;
+    const HANDLE console = GetStdHandle(STD_INPUT_HANDLE);
+    if (GetConsoleMode(console, &mode)) {
+        std::cout.flush();
+        read = readConsoleLine(console, value);
+    } else
+#endif
+    {
+        read = static_cast<bool>(std::getline(std::cin, value));
+    }
+    if (read) {
         return true;
     }
     std::cout << "\n输入结束，程序退出。\n";
@@ -130,6 +201,9 @@ void showMenu() {
 } // namespace
 
 int main() {
+#ifdef _WIN32
+    const ConsoleOutputUtf8 consoleOutput;
+#endif
     ProductList list; // 整个系统唯一的商品表，传给所有业务函数。
     std::cout << "这是可编译的程序大纲。业务函数尚未填写，调用后会提示 TODO。\n";
 

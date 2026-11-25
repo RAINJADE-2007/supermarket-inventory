@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-// 四人共用的接口。先约定接口，再分别填写各自的 .cpp 文件。
+// 两人共用的接口。先约定接口，再分别填写各自的 .cpp 文件。
 // 商品必须保存在下面的顺序表中；vector 只用于返回查询结果。
 constexpr int MAX_PRODUCTS = 1000;
 constexpr int MAX_STOCK = 1000000;
@@ -56,19 +56,19 @@ struct CategoryStatistics {
 // 5. 字符串不允许为空或仅空格，不能包含制表符、回车或换行。
 // 6. 价格范围为 0..MAX_PRICE_FEN；库存及预警值范围为 0..MAX_STOCK。
 
-// ========== 第1人：src/product.cpp，A1—A3 ==========
+// ========== 第1人：商品管理 src/product.cpp，A1—A3 ==========
 Status findById(const ProductList& list, const std::string& id, int& index);
 Status addProduct(ProductList& list, const Product& product);
 Status updateProductInfo(ProductList& list, const std::string& id,
                          const std::string& name, const std::string& category,
                          long long priceFen, int warningStock);
 
-// ========== 第2人：src/stock.cpp，B1—B3 ==========
+// ========== 第1人：库存操作 src/stock.cpp，B1—B3 ==========
 Status stockIn(ProductList& list, const std::string& id, int quantity);
 Status stockOut(ProductList& list, const std::string& id, int quantity);
 Status findLowStock(const ProductList& list, std::vector<Product>& result);
 
-// ========== 第3人：src/query.cpp，C1—C5 ==========
+// ========== 第2人：查询统计 src/query.cpp，C1—C5 ==========
 Status queryByName(const ProductList& list, const std::string& keyword,
                    std::vector<Product>& result);
 Status queryByCategory(const ProductList& list, const std::string& category,
@@ -79,7 +79,7 @@ Status calculateStatistics(const ProductList& list, Statistics& result);
 Status calculateCategoryStatistics(const ProductList& list,
                                   std::vector<CategoryStatistics>& result);
 
-// ========== 第4人：src/data_io.cpp，D1—D3 ==========
+// ========== 第2人：文件与随机数据 src/data_io.cpp，D1—D3 ==========
 // 文件导入：全部读取和校验成功后，替换当前商品表；失败时保留原表。
 Status loadFromFile(ProductList& list, const std::string& filename);
 Status saveToFile(const ProductList& list, const std::string& filename);
